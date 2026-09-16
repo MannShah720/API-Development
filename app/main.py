@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 import os
-from fastapi import FastAPI, Response, Body, status, HTTPException
+from fastapi import FastAPI, Response, Body, status, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 import random
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from . import models
+from . database import engine, get_db
 
 # .env details
 load_dotenv()
@@ -14,6 +16,8 @@ DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -35,17 +39,6 @@ while True:
         print("Database connection failed")
         print("Error:", error)
         time.sleep(2)
-
-
-my_posts = [
-    {"title": "post 1", "content": "content of post 1", "id": 1},
-    {"title": "post 2", "content": "content of post 2", "id": 2}
-]
-
-def find_post(id):
-    for post in my_posts:
-        if post["id"] == id:
-            return post
 
 # Root
 @app.get("/")
