@@ -1,12 +1,11 @@
 from dotenv import load_dotenv
 import os
 from fastapi import FastAPI, Response, Body, status, HTTPException, Depends
-from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models
+from . import models, schemas
 from . database import engine, get_db
 
 # .env details
@@ -19,11 +18,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
 
 # Database connection
 while True:
@@ -51,7 +45,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 # Create a new post
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
@@ -84,7 +78,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 # Update a post
 @app.put("/posts/{id}")
-def update_post(id: int, updated_post: Post, db: Session = Depends(get_db)):
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
 
